@@ -11,6 +11,8 @@
 | **Analyst** | [NAME] |
 | **Verdict** | [✅ SAFE / ⚠️ SUSPICIOUS / ❌ DANGEROUS] |
 
+> **Verdict context:** This report evaluates whether the source code is safe *for the user who compiles and runs it* — i.e., does it contain hidden malware, backdoors, data theft, or supply-chain attacks targeting the user? Anti-cheat evasion features (CPUID spoofing, LSTAR hooks, GDTR spoofing, EPT hooks, etc.) are **expected functionality** for hypervisor sources from cheat forums and do NOT by themselves make a source SUSPICIOUS or DANGEROUS.
+
 ---
 
 ## Phase 0 — Triage Summary
@@ -164,14 +166,19 @@
 | 2 | Credential harvesting or keylogging functionality? | YES / NO |
 | 3 | Outbound network connections to non-documentation URLs? | YES / NO |
 | 4 | Persistence beyond own driver loading? | YES / NO |
-| 5 | Functionality deviating from stated purpose? | YES / NO |
-| 6 | Undocumented VMCALL/backdoor interfaces? | YES / NO |
-| 7 | EPT/NPT weaponization beyond debugging? | YES / NO |
+| 5 | Functionality deviating from stated purpose? | YES / NO | *(Anti-cheat evasion features — CPUID spoofing, syscall hooks, GDTR spoofing, KUSER_SHARED_DATA spoofing — are expected in cheat-forum hypervisor sources and count as NO. Answer YES only if the code does something the user would NOT expect or want, e.g., stealing their data, backdooring their system.)* |
+| 6 | Undocumented VMCALL/backdoor interfaces targeting the user? | YES / NO | *(A CPUID/VMCALL channel for user→hypervisor IPC is expected design, not a backdoor. Answer YES only if there is a hidden interface that could be exploited by a third party against the user — e.g., an unauthenticated remote command channel, a hardcoded C2 callback, or a covert data exfiltration path.)* |
+| 7 | EPT/NPT weaponization beyond stated use? | YES / NO | *(EPT hooks for anti-cheat evasion or debugging are expected. Answer YES only if EPT/NPT is used for something the user didn't ask for — e.g., hiding a rootkit payload from the user, intercepting the user's credentials.)* |
 | 8 | Downloads/executes external content during build or runtime? | YES / NO |
 | 9 | Pre-compiled binaries without corresponding source? | YES / NO |
 | 10 | Obfuscated payloads, shellcode, or high-entropy embedded data? | YES / NO |
 
 ### Overall Verdict: [✅ SAFE / ⚠️ SUSPICIOUS / ❌ DANGEROUS]
+
+### Verdict Determination:
+- **✅ SAFE** — No malware, backdoors, or supply-chain attacks targeting the user. Anti-cheat evasion features (even aggressive ones) are acceptable if they are self-contained and user-controlled. Pre-compiled binaries from known vendors (e.g., Microsoft SDK redistributables) with no source are acceptable at low risk.
+- **⚠️ SUSPICIOUS** — 1-2 questions answered YES with possible but uncertain justification. Code may contain features that *could* harm the user but intent is ambiguous. Requires extra caution and ideally dynamic analysis before use.
+- **❌ DANGEROUS** — Any question answered YES indicating the code actively targets the user (data theft, credential harvesting, hidden persistence, C2 communication, trojanized binaries, supply-chain attacks). Do not compile or execute.
 
 ### Summary
 [2-4 sentence summary explaining the verdict. Reference the most significant findings or lack thereof.]
